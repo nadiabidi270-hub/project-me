@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Asset, AssetStatus, AssetCategory, User } from '../types';
-import { generateAssetDescription } from '../services/geminiService';
+import { generateAssetDescription } from '../../services/geminiService';
 import { SparklesIcon } from './icons';
 
 interface AssetModalProps {
