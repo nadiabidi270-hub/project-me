@@ -54,6 +54,84 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
   );
 };
 
+interface AssetTableProps {
+  assets: Asset[];
+  onEdit: (asset: Asset) => void;
+  onDelete: (assetId: string) => void;
+  statusColors: Record<AssetStatus, string>;
+  searchTerm: string;
+}
+
+const AssetTable: React.FC<AssetTableProps> = ({ assets, onEdit, onDelete, statusColors, searchTerm }) => {
+  return (
+    <div className="bg-surface rounded-lg shadow-sm border border-border overflow-hidden">
+      <div className="p-4 border-b border-border">
+        <h3 className="text-lg font-semibold">
+          All Assets
+          <span className="text-sm font-normal text-text-secondary ml-2">({assets.length} items)</span>
+        </h3>
+      </div>
+      {assets.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-gray-500">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3">Asset Name</th>
+                <th scope="col" className="px-6 py-3">Status</th>
+                <th scope="col" className="px-6 py-3">Assigned To</th>
+                <th scope="col" className="px-6 py-3">Department</th>
+                <th scope="col" className="px-6 py-3">Re-image Date</th>
+                <th scope="col" className="px-6 py-3"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {assets.map(asset => (
+                <tr key={asset.id} className="bg-white border-b hover:bg-gray-50">
+                  <td className="px-6 py-4 font-medium text-gray-900">
+                    {asset.name}
+                    <div className="text-xs text-text-secondary">{asset.serialNumber}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[asset.status] || 'bg-gray-100 text-gray-800'}`}>
+                      {asset.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {asset.assignedTo.name ? (
+                      <div>
+                          <div>{asset.assignedTo.name}</div>
+                          <div className="text-xs text-text-secondary">{asset.assignedTo.email}</div>
+                      </div>
+                    ) : (
+                      <span className="text-text-secondary">Unassigned</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">{asset.department || <span className="text-text-secondary">N/A</span>}</td>
+                  <td className="px-6 py-4">{asset.reimageDate ? new Date(asset.reimageDate).toLocaleDateString() : <span className="text-text-secondary">N/A</span>}</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <button onClick={() => onEdit(asset)} className="p-1 text-gray-500 hover:text-primary"><PencilIcon /></button>
+                      <button onClick={() => onDelete(asset.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center p-8">
+           <h3 className="text-lg font-medium text-text-main">No assets found</h3>
+           <p className="text-sm text-text-secondary mt-1">
+             {searchTerm ? 'Try adjusting your search.' : 'Add a new asset to get started.'}
+           </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 const App: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>(() => {
     try {
@@ -153,7 +231,6 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activePage) {
       case 'Dashboard':
-      case 'All Assets':
         return (
           <>
             <div className="mb-6 bg-surface rounded-lg shadow-sm border border-border p-6">
@@ -166,73 +243,24 @@ const App: React.FC = () => {
                     </div>
                  )}
             </div>
-            
-            <div className="bg-surface rounded-lg shadow-sm border border-border overflow-hidden">
-               <div className="p-4 border-b border-border">
-                 <h3 className="text-lg font-semibold">
-                  All Assets
-                  <span className="text-sm font-normal text-text-secondary ml-2">({filteredAssets.length} items)</span>
-                 </h3>
-              </div>
-              
-              {filteredAssets.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left text-gray-500">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3">Asset Name</th>
-                        <th scope="col" className="px-6 py-3">Status</th>
-                        <th scope="col" className="px-6 py-3">Assigned To</th>
-                        <th scope="col" className="px-6 py-3">Department</th>
-                        <th scope="col" className="px-6 py-3">Re-image Date</th>
-                        <th scope="col" className="px-6 py-3"><span className="sr-only">Actions</span></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAssets.map(asset => (
-                        <tr key={asset.id} className="bg-white border-b hover:bg-gray-50">
-                          <td className="px-6 py-4 font-medium text-gray-900">
-                            {asset.name}
-                            <div className="text-xs text-text-secondary">{asset.serialNumber}</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[asset.status] || 'bg-gray-100 text-gray-800'}`}>
-                              {asset.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {asset.assignedTo.name ? (
-                              <div>
-                                  <div>{asset.assignedTo.name}</div>
-                                  <div className="text-xs text-text-secondary">{asset.assignedTo.email}</div>
-                              </div>
-                            ) : (
-                              <span className="text-text-secondary">Unassigned</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">{asset.department || <span className="text-text-secondary">N/A</span>}</td>
-                          <td className="px-6 py-4">{asset.reimageDate ? new Date(asset.reimageDate).toLocaleDateString() : <span className="text-text-secondary">N/A</span>}</td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <button onClick={() => handleOpenModal(asset)} className="p-1 text-gray-500 hover:text-primary"><PencilIcon /></button>
-                              <button onClick={() => handleDeleteAsset(asset.id)} className="p-1 text-gray-500 hover:text-red-600"><TrashIcon /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center p-8">
-                   <h3 className="text-lg font-medium text-text-main">No assets found</h3>
-                   <p className="text-sm text-text-secondary mt-1">
-                     {searchTerm ? 'Try adjusting your search.' : 'Add a new asset to get started.'}
-                   </p>
-                </div>
-              )}
-            </div>
+            <AssetTable
+              assets={filteredAssets}
+              onEdit={handleOpenModal}
+              onDelete={handleDeleteAsset}
+              statusColors={statusColors}
+              searchTerm={searchTerm}
+            />
           </>
+        );
+      case 'All Assets':
+        return (
+          <AssetTable
+            assets={filteredAssets}
+            onEdit={handleOpenModal}
+            onDelete={handleDeleteAsset}
+            statusColors={statusColors}
+            searchTerm={searchTerm}
+          />
         );
       case 'Reports':
         return <ReportsPage assets={assets} />;
