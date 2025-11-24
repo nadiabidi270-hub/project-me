@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Asset, AssetStatus, AssetCategory } from '../types';
 
@@ -11,6 +12,7 @@ const statusColors: Record<AssetStatus, string> = {
     [AssetStatus.InRepair]: 'bg-yellow-500',
     [AssetStatus.AwaitingReimage]: 'bg-indigo-500',
     [AssetStatus.LostOrStolen]: 'bg-gray-500',
+    [AssetStatus.Disposed]: 'bg-slate-800',
 };
 
 const getDaysUntil = (dateString: string): number => {

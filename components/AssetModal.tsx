@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Asset, AssetStatus, AssetCategory, User } from '../types';
-import { generateAssetDescription } from '../../services/geminiService';
-import { SparklesIcon } from './icons';
+import { SignaturePad } from './SignaturePad';
 
 interface AssetModalProps {
   isOpen: boolean;
@@ -10,7 +9,8 @@ interface AssetModalProps {
   assetToEdit: Asset | null;
 }
 
-const initialFormState: Omit<Asset, 'id' | 'assignedTo'> & { assignedTo: User } = {
+const initialFormState: Omit<Asset, 'id' | 'assignedTo' | 'auditLog'> & { assignedTo: User } = {
+  assetTag: '',
   name: '',
   category: AssetCategory.Laptop,
   status: AssetStatus.InStock,
@@ -22,17 +22,21 @@ const initialFormState: Omit<Asset, 'id' | 'assignedTo'> & { assignedTo: User } 
   location: '',
   description: '',
   serialNumber: '',
+  assignmentSignature: '',
+  disposalSignature: ''
 };
 
 export const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave, assetToEdit }) => {
   const [formData, setFormData] = useState(initialFormState);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (assetToEdit) {
       setFormData(assetToEdit);
     } else {
-      setFormData(initialFormState);
+      setFormData({
+          ...initialFormState,
+          assetTag: `TAG-${Math.floor(1000 + Math.random() * 9000)}`
+      });
     }
   }, [assetToEdit, isOpen]);
 
@@ -50,20 +54,13 @@ export const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave,
         setFormData(prev => ({ ...prev, [name]: name === 'value' ? parseFloat(value) : value }));
     }
   };
-
-  const handleGenerateDescription = async () => {
-    setIsGenerating(true);
-    const keywords = `${formData.name}, ${formData.category}, S/N: ${formData.serialNumber}`;
-    const generatedDesc = await generateAssetDescription(keywords);
-    setFormData(prev => ({ ...prev, description: generatedDesc }));
-    setIsGenerating(false);
-  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const assetToSave: Asset = {
       ...formData,
       id: assetToEdit ? assetToEdit.id : `asset-${new Date().getTime()}`,
+      auditLog: assetToEdit ? assetToEdit.auditLog : [],
     };
     onSave(assetToSave);
   };
@@ -72,12 +69,18 @@ export const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave,
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-      <div className="bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border">
+      <div className="bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-border">
         <div className="p-6 border-b border-border">
           <h2 className="text-2xl font-bold text-text-main">{assetToEdit ? 'Edit Asset' : 'Add New Asset'}</h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div className="md:col-span-2">
+                <label htmlFor="assetTag" className="block text-sm font-bold text-primary mb-1">Asset Tag (Primary Key)</label>
+                <input type="text" name="assetTag" id="assetTag" value={formData.assetTag} onChange={handleChange} className={inputStyles} required placeholder="e.g. TAG-1234" />
+            </div>
+
             <div className="md:col-span-2">
               <label htmlFor="name" className="block text-sm font-medium text-text-secondary mb-1">Asset Name</label>
               <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className={inputStyles} required />
@@ -140,13 +143,37 @@ export const AssetModal: React.FC<AssetModalProps> = ({ isOpen, onClose, onSave,
             <div className="md:col-span-2">
               <div className="flex justify-between items-center mb-1">
                  <label htmlFor="description" className="block text-sm font-medium text-text-secondary">Description</label>
-                 <button type="button" onClick={handleGenerateDescription} disabled={isGenerating} className="flex items-center text-sm text-primary hover:text-primary-focus disabled:opacity-50 disabled:cursor-wait">
-                   <SparklesIcon className="w-4 h-4 mr-1" />
-                   {isGenerating ? 'Generating...' : 'Generate with AI'}
-                 </button>
               </div>
               <textarea name="description" id="description" rows={4} value={formData.description} onChange={handleChange} className={inputStyles}></textarea>
             </div>
+
+            {/* Signature Section for Assignments */}
+            {formData.status === AssetStatus.Assigned && (
+                 <div className="md:col-span-2 mt-4 border-t pt-4">
+                     <h3 className="text-lg font-bold text-gray-800 mb-2">Device Reception Log</h3>
+                     <p className="text-sm text-gray-600 mb-2">I acknowledge receipt of this device in good working order.</p>
+                     <SignaturePad 
+                        label="Recipient Signature"
+                        existingSignature={formData.assignmentSignature}
+                        onSave={(sig) => setFormData(prev => ({...prev, assignmentSignature: sig}))}
+                        onClear={() => setFormData(prev => ({...prev, assignmentSignature: ''}))}
+                     />
+                 </div>
+            )}
+
+            {/* Signature Section for Disposal */}
+             {formData.status === AssetStatus.Disposed && (
+                 <div className="md:col-span-2 mt-4 border-t pt-4">
+                     <h3 className="text-lg font-bold text-red-800 mb-2">Disposal Agreement</h3>
+                     <p className="text-sm text-gray-600 mb-2">I authorize the disposal of this asset according to policy.</p>
+                     <SignaturePad 
+                        label="Client Disposal Signature"
+                        existingSignature={formData.disposalSignature}
+                        onSave={(sig) => setFormData(prev => ({...prev, disposalSignature: sig}))}
+                        onClear={() => setFormData(prev => ({...prev, disposalSignature: ''}))}
+                     />
+                 </div>
+            )}
           </div>
 
           <div className="flex justify-end items-center gap-4 pt-6 mt-6 border-t border-border">

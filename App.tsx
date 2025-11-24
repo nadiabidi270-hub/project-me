@@ -1,29 +1,38 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { Asset, AssetStatus } from './types';
-import { INITIAL_ASSETS } from './constants';
+import { Asset, AssetStatus, AppUser, AuditLogEntry } from './types';
+import { INITIAL_ASSETS, INITIAL_USERS } from './constants';
 import { AssetModal } from './components/AssetModal';
 import {
   NexaLogo, PlusIcon, PencilIcon, TrashIcon, SearchIcon,
-  DashboardIcon, BoxIcon, ChartBarIcon, CogIcon,
+  DashboardIcon, BoxIcon, ChartBarIcon, CogIcon, UsersIcon, ClipboardDocumentCheckIcon
 } from './components/icons';
 import { ReportsPage } from './components/ReportsPage';
 import { SettingsPage } from './components/SettingsPage';
+import { UsersPage } from './components/UsersPage';
+import { AuditPage } from './components/AuditPage';
 import { PieChart } from './components/PieChart';
+import { LoginPage } from './components/LoginPage';
 
-const APP_STORAGE_KEY = 'nexa-assets-v2';
+const APP_STORAGE_KEY = 'nexa-assets-v3';
+const USERS_STORAGE_KEY = 'nexa-users-v1';
 
-type Page = 'Dashboard' | 'All Assets' | 'Reports' | 'Settings';
+type Page = 'Dashboard' | 'All Assets' | 'Reports' | 'Users' | 'Audit Log' | 'Settings';
 
 interface SidebarProps {
   activePage: Page;
   onNavigate: (page: Page) => void;
+  onLogout: () => void;
+  currentUser: AppUser | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, onLogout, currentUser }) => {
   const navItems = [
     { icon: <DashboardIcon />, label: 'Dashboard' as Page },
     { icon: <BoxIcon />, label: 'All Assets' as Page },
     { icon: <ChartBarIcon />, label: 'Reports' as Page },
+    { icon: <UsersIcon />, label: 'Users' as Page },
+    { icon: <ClipboardDocumentCheckIcon />, label: 'Audit Log' as Page },
     { icon: <CogIcon />, label: 'Settings' as Page },
   ];
 
@@ -32,6 +41,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
       <div className="h-16 flex items-center px-6 border-b border-gray-700">
         <NexaLogo className="w-8 h-8" />
         <h1 className="text-xl font-bold ml-3 text-white">Nexa</h1>
+      </div>
+      <div className="px-6 py-4 border-b border-gray-700">
+        <p className="text-xs text-gray-400 uppercase">Logged in as</p>
+        <p className="text-sm font-bold text-white truncate">{currentUser?.name}</p>
+        <p className="text-xs text-gray-400">{currentUser?.role}</p>
       </div>
       <nav className="flex-1 px-4 py-6">
         <ul>
@@ -50,6 +64,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
           ))}
         </ul>
       </nav>
+      <div className="p-4 border-t border-gray-700">
+          <button onClick={onLogout} className="w-full px-4 py-2 text-sm text-center text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg">
+              Sign Out
+          </button>
+      </div>
     </aside>
   );
 };
@@ -76,6 +95,7 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onEdit, onDelete, statu
           <table className="w-full text-sm text-left text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
+                <th scope="col" className="px-6 py-3">Asset Tag</th>
                 <th scope="col" className="px-6 py-3">Asset Name</th>
                 <th scope="col" className="px-6 py-3">Status</th>
                 <th scope="col" className="px-6 py-3">Assigned To</th>
@@ -87,6 +107,7 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onEdit, onDelete, statu
             <tbody>
               {assets.map(asset => (
                 <tr key={asset.id} className="bg-white border-b hover:bg-gray-50">
+                  <td className="px-6 py-4 font-bold text-primary">{asset.assetTag || 'N/A'}</td>
                   <td className="px-6 py-4 font-medium text-gray-900">
                     {asset.name}
                     <div className="text-xs text-text-secondary">{asset.serialNumber}</div>
@@ -133,6 +154,8 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onEdit, onDelete, statu
 
 
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+
   const [assets, setAssets] = useState<Asset[]>(() => {
     try {
       const savedAssets = localStorage.getItem(APP_STORAGE_KEY);
@@ -143,6 +166,15 @@ const App: React.FC = () => {
     }
   });
 
+  const [users, setUsers] = useState<AppUser[]>(() => {
+      try {
+          const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+          return savedUsers ? JSON.parse(savedUsers) : INITIAL_USERS;
+      } catch (error) {
+          return INITIAL_USERS;
+      }
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [assetToEdit, setAssetToEdit] = useState<Asset | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,6 +183,28 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(assets));
   }, [assets]);
+
+  useEffect(() => {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }, [users]);
+
+  // Handle Login State Check
+  useEffect(() => {
+    const sessionUser = localStorage.getItem('nexa_session_user');
+    if (sessionUser) {
+        setCurrentUser(JSON.parse(sessionUser));
+    }
+  }, []);
+
+  const handleLogin = (user: AppUser) => {
+      setCurrentUser(user);
+      localStorage.setItem('nexa_session_user', JSON.stringify(user));
+  };
+
+  const handleLogout = () => {
+      setCurrentUser(null);
+      localStorage.removeItem('nexa_session_user');
+  };
 
   const countByStatus = useMemo(() => {
     return assets.reduce((acc, asset) => {
@@ -169,8 +223,36 @@ const App: React.FC = () => {
     setAssetToEdit(null);
   };
 
+  const logAssetAction = (action: 'Created' | 'Updated' | 'Deleted', details: string): AuditLogEntry => {
+      return {
+          id: `log-${Date.now()}`,
+          date: new Date().toISOString(),
+          action,
+          details,
+          user: currentUser ? currentUser.name : 'Unknown User'
+      };
+  };
+
   const handleSaveAsset = (asset: Asset) => {
-    setAssets(prev => assetToEdit ? prev.map(a => a.id === asset.id ? asset : a) : [asset, ...prev]);
+    setAssets(prev => {
+        if (assetToEdit) {
+            // Update existing
+            return prev.map(a => {
+                if (a.id === asset.id) {
+                    const updatedLog = [
+                        logAssetAction('Updated', `Asset updated. Status: ${asset.status}`),
+                        ...(a.auditLog || [])
+                    ];
+                    return { ...asset, auditLog: updatedLog };
+                }
+                return a;
+            });
+        } else {
+            // Create new
+            const newLog = [logAssetAction('Created', 'Asset created initially')];
+            return [{ ...asset, auditLog: newLog }, ...prev];
+        }
+    });
     handleCloseModal();
   };
 
@@ -179,10 +261,15 @@ const App: React.FC = () => {
       setAssets(prev => prev.filter(a => a.id !== assetId));
     }
   };
+
+  const handleAddUser = (user: AppUser) => {
+      setUsers(prev => [...prev, user]);
+  };
   
   const handleClearAllData = () => {
       setAssets([]);
       localStorage.removeItem(APP_STORAGE_KEY);
+      localStorage.removeItem(USERS_STORAGE_KEY);
   };
 
   const filteredAssets = useMemo(() => {
@@ -208,6 +295,7 @@ const App: React.FC = () => {
     [AssetStatus.InRepair]: 'bg-status-inrepair text-status-inrepair-text',
     [AssetStatus.AwaitingReimage]: 'bg-status-reimage text-status-reimage-text',
     [AssetStatus.LostOrStolen]: 'bg-gray-200 text-gray-800',
+    [AssetStatus.Disposed]: 'bg-red-900 text-white',
   };
   
    const statusPieColors: Record<AssetStatus, string> = {
@@ -216,6 +304,7 @@ const App: React.FC = () => {
     [AssetStatus.InRepair]: '#F59E0B', // Amber 500
     [AssetStatus.AwaitingReimage]: '#6366F1', // Indigo 500
     [AssetStatus.LostOrStolen]: '#6B7280', // Gray 500
+    [AssetStatus.Disposed]: '#1F2937', // Gray 800
   };
 
   const pieChartData = useMemo(() => {
@@ -264,6 +353,10 @@ const App: React.FC = () => {
         );
       case 'Reports':
         return <ReportsPage assets={assets} />;
+      case 'Users':
+          return <UsersPage users={users} onAddUser={handleAddUser} />;
+      case 'Audit Log':
+          return <AuditPage assets={assets} />;
       case 'Settings':
         return <SettingsPage onClearAllData={handleClearAllData} />;
       default:
@@ -271,10 +364,15 @@ const App: React.FC = () => {
     }
   };
 
+  // If not logged in, show Login Page
+  if (!currentUser) {
+      return <LoginPage users={users} onLogin={handleLogin} />;
+  }
+
   return (
     <>
       <div className="flex h-screen bg-background text-text-main font-sans">
-        <Sidebar activePage={activePage} onNavigate={setActivePage} />
+        <Sidebar activePage={activePage} onNavigate={setActivePage} onLogout={handleLogout} currentUser={currentUser} />
         
         <div className="flex-1 flex flex-col overflow-hidden">
           <header className="bg-surface border-b border-border shadow-sm">
@@ -287,7 +385,7 @@ const App: React.FC = () => {
                   </span>
                   <input
                     type="text"
-                    placeholder="Search assets..."
+                    placeholder="Search..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full sm:w-64 pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"

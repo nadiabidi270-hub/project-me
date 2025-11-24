@@ -1,8 +1,10 @@
-import { Asset, AssetStatus, AssetCategory } from './types';
+
+import { Asset, AssetStatus, AssetCategory, AppUser } from './types';
 
 export const INITIAL_ASSETS: Asset[] = [
   {
     id: 'asset-1',
+    assetTag: 'TAG-1001',
     name: 'Dell Latitude 7420 Laptop',
     category: AssetCategory.Laptop,
     status: AssetStatus.Assigned,
@@ -14,9 +16,14 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'North Campus - F201',
     description: 'Standard issue faculty laptop for teaching and administration. 16GB RAM, 512GB SSD.',
     serialNumber: 'AST-001',
+    auditLog: [
+      { id: 'log-1', date: '2023-08-20T10:00:00Z', action: 'Created', details: 'Asset created in system', user: 'Admin' },
+      { id: 'log-2', date: '2023-08-21T14:30:00Z', action: 'Updated', details: 'Assigned to Prof. Sarah Chen', user: 'Admin' }
+    ],
   },
   {
     id: 'asset-2',
+    assetTag: 'TAG-1002',
     name: 'Apple MacBook Pro 14"',
     category: AssetCategory.Laptop,
     status: AssetStatus.Assigned,
@@ -28,9 +35,13 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'Lakeshore Campus - Wellness Center',
     description: 'High-performance laptop for graphic design and video editing.',
     serialNumber: 'AST-002',
+    auditLog: [
+       { id: 'log-3', date: '2023-09-01T09:15:00Z', action: 'Created', details: 'Asset created in system', user: 'Admin' }
+    ],
   },
   {
     id: 'asset-3',
+    assetTag: 'TAG-1003',
     name: 'Dell OptiPlex 7090 Desktop',
     category: AssetCategory.Desktop,
     status: AssetStatus.AwaitingReimage,
@@ -42,9 +53,11 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'North Campus - Registration Office',
     description: 'Desktop for student registration and administrative tasks. Awaiting OS refresh.',
     serialNumber: 'AST-003',
+    auditLog: [],
   },
   {
     id: 'asset-4',
+    assetTag: 'TAG-1004',
     name: 'Apple iMac 24"',
     category: AssetCategory.Desktop,
     status: AssetStatus.Assigned,
@@ -56,9 +69,11 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'North Campus - Finance Dept',
     description: 'All-in-one desktop for financial analysis.',
     serialNumber: 'AST-004',
+    auditLog: [],
   },
   {
     id: 'asset-5',
+    assetTag: 'TAG-1005',
     name: 'Dell Inspiron 15 3000',
     category: AssetCategory.Laptop,
     status: AssetStatus.InStock,
@@ -70,9 +85,11 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'North Campus - IT Storage',
     description: 'A spare laptop available for assignment.',
     serialNumber: 'AST-005',
+    auditLog: [],
   },
   {
     id: 'asset-6',
+    assetTag: 'TAG-1006',
     name: 'Epson PowerLite 1781W',
     category: AssetCategory.Projector,
     status: AssetStatus.InRepair,
@@ -84,9 +101,11 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'AV Repair Bench',
     description: 'Portable classroom projector. Issue: Dim bulb. Sent for repair.',
     serialNumber: 'EPSON-PL-4321',
+    auditLog: [],
   },
    {
     id: 'asset-7',
+    assetTag: 'TAG-1007',
     name: 'Lenovo ThinkPad X1',
     category: AssetCategory.Laptop,
     status: AssetStatus.AwaitingReimage,
@@ -98,5 +117,12 @@ export const INITIAL_ASSETS: Asset[] = [
     location: 'IT Service Desk',
     description: 'Returned from faculty, awaiting re-image for new user.',
     serialNumber: 'AST-007',
+    auditLog: [],
   },
+];
+
+export const INITIAL_USERS: AppUser[] = [
+  { id: 'user-1', name: 'Admin User', email: 'admin@nexa.com', role: 'Admin', lastLogin: '2024-05-20', status: 'Active', password: 'password123' },
+  { id: 'user-2', name: 'John Doe', email: 'john@nexa.com', role: 'Staff', lastLogin: '2024-05-19', status: 'Active', password: 'password123' },
+  { id: 'user-3', name: 'Jane Smith', email: 'jane@nexa.com', role: 'Viewer', lastLogin: '2024-05-15', status: 'Inactive', password: 'password123' },
 ];
