@@ -1,18 +1,18 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Asset, AssetStatus, AppUser, AuditLogEntry } from './types';
+import { Asset, AssetStatus, AppUser, AuditLogEntry } from '../types';
 import { INITIAL_ASSETS, INITIAL_USERS } from './constants';
-import { AssetModal } from './components/AssetModal';
+import { AssetModal } from '../components/AssetModal';
 import {
   NexaLogo, PlusIcon, PencilIcon, TrashIcon, SearchIcon,
   DashboardIcon, BoxIcon, ChartBarIcon, CogIcon, UsersIcon, ClipboardDocumentCheckIcon
-} from './components/icons';
-import { ReportsPage } from './components/ReportsPage';
-import { SettingsPage } from './components/SettingsPage';
-import { UsersPage } from './components/UsersPage';
-import { AuditPage } from './components/AuditPage';
-import { PieChart } from './components/PieChart';
-import { LoginPage } from './components/LoginPage';
+} from '../components/icons';
+import { ReportsPage } from '../components/ReportsPage';
+import { SettingsPage } from '../components/SettingsPage';
+import { UsersPage } from '../components/UsersPage';
+import { AuditPage } from '../components/AuditPage';
+import { PieChart } from '../components/PieChart';
+import { LoginPage } from '../components/LoginPage';
 
 const APP_STORAGE_KEY = 'nexa-assets-v3';
 const USERS_STORAGE_KEY = 'nexa-users-v1';

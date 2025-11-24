@@ -1,5 +1,5 @@
 
-import { Asset, AssetStatus, AssetCategory, AppUser } from './types';
+import { Asset, AssetStatus, AssetCategory, AppUser } from '../types';
 
 export const INITIAL_ASSETS: Asset[] = [
   {
